@@ -15,7 +15,7 @@ class Tracker {
     public:
         Tracker(const std::string filename, const std::string delimiter = ",") {
             Tracker::delimiter = delimiter;
-            tracker_file.open("tracker_file.csv");//, std::ios_base::app);
+            tracker_file.open(filename);//, std::ios_base::app);
         }
 
         void record_flight(const std::string name, const double burned_calories, const double flight_distance) {
@@ -34,12 +34,13 @@ class Penguin {
         double cals_per_meter;
         Tracker & p_tracker;
     public:
-        double stored_calories;
+        double stored_calories = 0;
         Penguin(
             const std::string name, 
             Tracker & p_tracker,
             const double cals_per_meter = 10
         ) : name(name), cals_per_meter(cals_per_meter), p_tracker(p_tracker) {}
+        
         void give_food(const double calorific_value, const int quantity) {
             float total_calories = 0;
             for (int i=0; i< quantity; i++) {
@@ -249,18 +250,29 @@ void catch_fish (Penguin & penguin, Fishing::FishCatcher & fish_catcher) {
     penguin.give_food(fish.calorific_value, 1);
 }
 
+void display_intro(std::string intro_file) {
+    std::ifstream filestream;
+    filestream.open(intro_file);
+    std::string line;
+
+    while ( std::getline(filestream, line) ) {
+        std::cout << line << std::endl;
+    }
+}
+
 int main()
 {
+    display_intro("penguinsim/intro_text.txt");
     int food_items;
     double cal_value;
     Tracker penguin_tracker("output.csv");
     Penguin gentoo("Fred", penguin_tracker);
     Seal leo(100);
     double finish_distance = 500;
-    std::cout << leo.distance << std::endl;
     Fishing::FishCatcher catcher("fish.csv");
 
     while (true) {
+        std::cout << std::endl;
         std::cout << "Seal Distance: " << leo.distance << std::endl;
         std::cout << "Finish Distance: " << finish_distance << std::endl;
         std::cout << "Stored Calories: " << gentoo.stored_calories << std::endl;
@@ -301,7 +313,7 @@ int main()
             std::cout << "cannot fly" << std::endl;
             catch_fish(gentoo, catcher);
         }
-        leo.distance -= 5 + RandomUtils::random_in_range(0.0, 15.0);;
+        leo.distance -= 5 + RandomUtils::random_in_range(0.0, 10.0);;
         if (finish_distance < 0) {
             std::cout << "You made it!" << std::endl;
             break;
