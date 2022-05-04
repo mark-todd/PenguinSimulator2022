@@ -144,9 +144,9 @@ namespace Fishing {
             double calorific_value;
 
             Fish(
-                std::string name,
-                FishingRanges range,
-                double calorific_value
+                const std::string name,
+                const FishingRanges range,
+                const double calorific_value
             ) : name(name), range(range), calorific_value(calorific_value) {}
     };
 
@@ -163,9 +163,9 @@ namespace Fishing {
         public:
             FishCatcher(
                 std::string fish_file,
-                double sr_prob = 0.8,
-                double mr_prob = 0.5,
-                double lr_prob = 0.1
+                const double sr_prob = 0.8,
+                const double mr_prob = 0.5,
+                const double lr_prob = 0.1
             ) : sr_prob(sr_prob), mr_prob(mr_prob), lr_prob(lr_prob) {
                 fish_file_stream.open(fish_file);
                 std::string line;
@@ -202,7 +202,7 @@ namespace Fishing {
                     
                 }
             }
-            Fish catch_fish(FishingRanges range) {
+            Fish catch_fish(const FishingRanges range) {
                 double score = RandomUtils::random_in_range();
                 std::cout << "Score: " << score << std::endl;
                 if (range == short_range and score < sr_prob) {
@@ -250,7 +250,7 @@ void catch_fish (Penguin & penguin, Fishing::FishCatcher & fish_catcher) {
     penguin.give_food(fish.calorific_value, 1);
 }
 
-void display_intro(std::string intro_file) {
+void display_intro(const std::string intro_file) {
     std::ifstream filestream;
     filestream.open(intro_file);
     std::string line;
@@ -263,8 +263,6 @@ void display_intro(std::string intro_file) {
 int main()
 {
     display_intro("penguinsim/intro_text.txt");
-    int food_items;
-    double cal_value;
     Tracker penguin_tracker("output.csv");
     Penguin gentoo("Fred", penguin_tracker);
     Seal leo(100);
