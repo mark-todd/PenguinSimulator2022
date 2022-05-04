@@ -110,6 +110,12 @@ namespace RandomUtils {
         static std::mt19937 gen(rd());
         return select_randomly(start, end, gen);
     }
+    double random_in_range (const double range_from = 0.0, const double range_to = 1.0) {
+        std::random_device rand_dev;
+        std::mt19937 generator(rand_dev());
+        std::uniform_real_distribution<double> distr(range_from, range_to);
+        return distr(generator);
+    }
 }
 
 namespace Fishing {
@@ -196,14 +202,7 @@ namespace Fishing {
                 }
             }
             Fish catch_fish(FishingRanges range) {
-                //double score;
-                const int range_from = 0;
-                const int range_to = 1;
-                std::random_device rand_dev;
-                std::mt19937 generator(rand_dev());
-                std::uniform_real_distribution<double> distr(range_from, range_to);
-                double score = distr(generator);
-                
+                double score = RandomUtils::random_in_range();
                 std::cout << "Score: " << score << std::endl;
                 if (range == short_range and score < sr_prob) {
                     return *RandomUtils::select_randomly(sr_fish_catalogue.begin(), sr_fish_catalogue.end());
@@ -302,7 +301,7 @@ int main()
             std::cout << "cannot fly" << std::endl;
             catch_fish(gentoo, catcher);
         }
-        leo.distance -= 10;
+        leo.distance -= 5 + RandomUtils::random_in_range(0.0, 15.0);;
         if (finish_distance < 0) {
             std::cout << "You made it!" << std::endl;
             break;
