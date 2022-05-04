@@ -49,7 +49,7 @@ class Penguin {
         }
 
         bool can_fly() {
-            return stored_calories >= 500;
+            return stored_calories >= 300;
         }
         double fly(const double flight_distance) {
             double possible_flight_distance;
@@ -150,10 +150,16 @@ namespace Fishing {
             std::list<Fish> sr_fish_catalogue;
             std::list<Fish> mr_fish_catalogue;
             std::list<Fish> lr_fish_catalogue;
+            double sr_prob;
+            double mr_prob;
+            double lr_prob;
         public:
             FishCatcher(
-                std::string fish_file
-            ) {
+                std::string fish_file,
+                double sr_prob = 0.8,
+                double mr_prob = 0.5,
+                double lr_prob = 0.1
+            ) : sr_prob(sr_prob), mr_prob(mr_prob), lr_prob(lr_prob) {
                 fish_file_stream.open(fish_file);
                 std::string line;
                 while ( std::getline(fish_file_stream, line) ) {
@@ -190,14 +196,27 @@ namespace Fishing {
                 }
             }
             Fish catch_fish(FishingRanges range) {
-                if (range == short_range) {
+                //double score;
+                const int range_from = 0;
+                const int range_to = 1;
+                std::random_device rand_dev;
+                std::mt19937 generator(rand_dev());
+                std::uniform_real_distribution<double> distr(range_from, range_to);
+                double score = distr(generator);
+                
+                std::cout << "Score: " << score << std::endl;
+                if (range == short_range and score < sr_prob) {
                     return *RandomUtils::select_randomly(sr_fish_catalogue.begin(), sr_fish_catalogue.end());
                 }
-                else if (range == medium_range) {
+                else if (range == medium_range and score < mr_prob) {
                     return *RandomUtils::select_randomly(mr_fish_catalogue.begin(), mr_fish_catalogue.end());
                 }
-                else {
+                else if (range == long_range and score < lr_prob) {
                     return *RandomUtils::select_randomly(lr_fish_catalogue.begin(), lr_fish_catalogue.end());
+                }
+                else {
+                    Fish null_fish("Nothing!", range, 0);
+                    return null_fish;
                 }
             };
 
@@ -205,7 +224,28 @@ namespace Fishing {
 }
 
 void catch_fish (Penguin & penguin, Fishing::FishCatcher & fish_catcher) {
-    Fishing::Fish fish = fish_catcher.catch_fish(Fishing::long_range);
+    std::string range_choice;
+    Fishing::Fish fish("Error", Fishing::short_range, 0);
+    while (true) {
+        std::cout << "What range would you like to search for fish at? (short/med/long)" << std::endl;
+        std::cin >> range_choice;
+        if (range_choice == "short") {
+            fish = fish_catcher.catch_fish(Fishing::short_range);
+            break;
+        }
+        else if (range_choice == "med") {
+            fish = fish_catcher.catch_fish(Fishing::medium_range);
+            break;
+        }
+        else if (range_choice == "long") {
+            fish = fish_catcher.catch_fish(Fishing::long_range);
+            break;
+        }
+        else {
+            std::cout << "Invalid choice" << std::endl;
+        }
+    }
+    assert (fish.name!="Error");
     std::cout << "You caught: " << fish.name << std::endl;
     penguin.give_food(fish.calorific_value, 1);
 }
@@ -217,12 +257,13 @@ int main()
     Tracker penguin_tracker("output.csv");
     Penguin gentoo("Fred", penguin_tracker);
     Seal leo(100);
-    double finish_distance = 1000;
+    double finish_distance = 500;
     std::cout << leo.distance << std::endl;
     Fishing::FishCatcher catcher("fish.csv");
 
     while (true) {
         std::cout << "Seal Distance: " << leo.distance << std::endl;
+        std::cout << "Finish Distance: " << finish_distance << std::endl;
         std::cout << "Stored Calories: " << gentoo.stored_calories << std::endl;
 
         std::cout << "Your penguin ";
@@ -261,7 +302,7 @@ int main()
             std::cout << "cannot fly" << std::endl;
             catch_fish(gentoo, catcher);
         }
-        leo.distance -= 20;
+        leo.distance -= 10;
         if (finish_distance < 0) {
             std::cout << "You made it!" << std::endl;
             break;
