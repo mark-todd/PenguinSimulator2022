@@ -32,9 +32,9 @@ class Penguin {
     private:
         std::string name;
         double cals_per_meter;
-        double stored_calories;
         Tracker & p_tracker;
     public:
+        double stored_calories;
         Penguin(
             const std::string name, 
             Tracker & p_tracker,
@@ -49,7 +49,7 @@ class Penguin {
         }
 
         bool can_fly() {
-            return stored_calories >= 5000;
+            return stored_calories >= 500;
         }
         double fly(const double flight_distance) {
             double possible_flight_distance;
@@ -68,6 +68,12 @@ class Penguin {
             return actual_flight_distance;
         }
 
+};
+
+class Seal {
+    public:
+        double distance;
+        Seal(const double initial_distance) : distance(initial_distance) {}
 };
 
 std::list<std::string> split_string (std::string input_string, std::string delimiter) {
@@ -198,6 +204,11 @@ namespace Fishing {
     };
 }
 
+void catch_fish (Penguin & penguin, Fishing::FishCatcher & fish_catcher) {
+    Fishing::Fish fish = fish_catcher.catch_fish(Fishing::long_range);
+    std::cout << "You caught: " << fish.name << std::endl;
+    penguin.give_food(fish.calorific_value, 1);
+}
 
 int main()
 {
@@ -205,52 +216,60 @@ int main()
     double cal_value;
     Tracker penguin_tracker("output.csv");
     Penguin gentoo("Fred", penguin_tracker);
+    Seal leo(100);
+    double finish_distance = 1000;
+    std::cout << leo.distance << std::endl;
     Fishing::FishCatcher catcher("fish.csv");
-    Fishing::Fish fish = catcher.catch_fish(Fishing::short_range);
-    std::cout << fish.name << std::endl;
+
     while (true) {
-        std::cout << "How many food items shall I feed you penguin?" << std::endl;
-        std::cin >> food_items;
-        std::cout << "What's the calorific value of each item?" << std::endl;
-        std::cin >> cal_value;
-        gentoo.give_food(cal_value, food_items);
-        while (true) {
-            std::cout << "Your penguin ";
-            if (gentoo.can_fly()) {
-                std::cout << "can fly" << std::endl;
-                std::string flight_choice;
-                while (true) {
-                    std::cout << "Would you like your penguin to fly? (y/n)" << std::endl;
-                    std::cin >> flight_choice;
-                    if (flight_choice == "y") {
-                        break;
-                    }
-                    else if (flight_choice == "n") {
-                        break;
-                    }
-                    else {
-                        std::cout << "invalid choice" << std::endl;
-                        continue;
-                    }
-                }
-                if (flight_choice == "y") {
-                    double flight_distance;
-                    double actual_flight_distance;
-                    std::cout << "How far would you like your penguin to fly?" << std::endl;
-                    std::cin >> flight_distance;
-                    actual_flight_distance = gentoo.fly(flight_distance);
-                    std::cout << "Your penguin flew: " << actual_flight_distance << " metres" << std::endl;
-                }
-                else {
+        std::cout << "Seal Distance: " << leo.distance << std::endl;
+        std::cout << "Stored Calories: " << gentoo.stored_calories << std::endl;
+
+        std::cout << "Your penguin ";
+        if (gentoo.can_fly()) {
+            std::cout << "can fly" << std::endl;
+            std::string flight_choice;
+            while (true) {
+                std::cout << "Would you like your penguin to fly, or catch fish? (fly/catch)" << std::endl;
+                std::cin >> flight_choice;
+                if (flight_choice == "fly") {
                     break;
                 }
+                else if (flight_choice == "catch") {
+                    break;
+                }
+                else {
+                    std::cout << "invalid choice" << std::endl;
+                    continue;
+                }
+            }
+            if (flight_choice == "fly") {
+                double flight_distance;
+                double actual_flight_distance;
+                std::cout << "How far would you like your penguin to fly?" << std::endl;
+                std::cin >> flight_distance;
+                actual_flight_distance = gentoo.fly(flight_distance);
+                std::cout << "Your penguin flew: " << actual_flight_distance << " metres" << std::endl;
+                leo.distance += actual_flight_distance;
+                finish_distance -= actual_flight_distance;
             }
             else {
-                std::cout << "cannot fly" << std::endl;
-                break;
+                catch_fish(gentoo, catcher);
             }
+        }
+        else {
+            std::cout << "cannot fly" << std::endl;
+            catch_fish(gentoo, catcher);
+        }
+        leo.distance -= 20;
+        if (finish_distance < 0) {
+            std::cout << "You made it!" << std::endl;
+            break;
+        }
+        else if (leo.distance < 0) {
+            std::cout << "You got eaten!" << std::endl;
+            break;
         }
     }
     return 0;
 }
-
