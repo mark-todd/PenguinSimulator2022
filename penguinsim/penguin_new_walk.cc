@@ -34,6 +34,26 @@ class BoardMaker {
         std::string get_line(const int line_no, const int x_offset) {
             return moveStartToEnd(BoardMaker::lines[line_no], x_offset);
         }
+        std::string get_trees(const int x_position, const int slowness) {
+            std::string new_str = "";
+            for (int line_no=0; line_no < 11; ++line_no) {
+                new_str += BoardMaker::get_line(line_no, (x_position/slowness) %40);
+                new_str += "\n";
+            }
+            return new_str;
+        }
+        std::string get_grass(const int x_position, const int slowness) {
+            return BoardMaker::get_line(12, (x_position/slowness) %40);
+        }
+        std::string get_trees_and_grass(const int x_position) {
+            std::string str = BoardMaker::get_trees(x_position, 10);
+            str +=  BoardMaker::get_grass(x_position, 5) + "\n";
+            str +=  BoardMaker::get_grass(x_position, 4) + "\n";
+            str +=  BoardMaker::get_grass(x_position, 3) + "\n";
+            str +=  BoardMaker::get_grass(x_position, 2) + "\n";
+            return str;
+        }
+
 };
 
 
@@ -68,11 +88,7 @@ int main()
         }
         printw("penguin x '%d'", penguin_x);
         printw("offset'%d'", (penguin_x/3) %47);
-        std::string new_str = "";
-        for (int line_no=0; line_no < 12; ++line_no) {
-            new_str += board.get_line(line_no, (penguin_x/3) %40);
-            new_str += "\n";
-        }
+        std::string new_str = board.get_trees_and_grass(penguin_x);
         printw(new_str.c_str());
         refresh();
     }
