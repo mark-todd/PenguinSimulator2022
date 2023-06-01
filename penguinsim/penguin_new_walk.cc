@@ -16,6 +16,60 @@ std::string moveStartToEnd(const std::string& str, int numCharacters)
     return end + start;
 }
 
+class AsciiPenguin {
+    private:
+        bool facing_left;
+        std::string get_head(const bool is_left) {
+            if (is_left) {
+                return "<· ) ";
+            } else {
+                return " ( ·>";
+            }
+        }
+        std::string get_feet(const int i, const bool is_left) {
+            if (is_left) {
+                if (i == 0) {
+                    return(" \" \" ");
+                } else if (i==1) {
+                    return(" \"  \"");
+                } else if (i==2) {
+                    return("\"  \" ");
+                } else {
+                    return("  \"\" ");
+                }
+            } else {
+                if (i == 0) {
+                    return(" \" \" ");
+                } else if (i==1) {
+                    return("\"  \" ");
+                } else if (i==2) {
+                    return(" \"  \"");
+                } else {
+                    return(" \"\"  ");
+                }
+            }
+        }
+
+        std::string wrap_line(const std::string line) {
+            std::string n_line = std::string(20, ' ');
+            n_line += line;
+            n_line += std::string(18, ' ');
+            n_line += "\n";
+            return n_line;
+        }
+    public:
+        AsciiPenguin(const bool starts_facing_left) {
+            facing_left = starts_facing_left;
+        }
+        std::string get_penguin(const bool is_left, const int x_position) {
+            std::string strout = AsciiPenguin::wrap_line(AsciiPenguin::get_head(is_left));
+            strout += AsciiPenguin::wrap_line("/(V)\\");
+            strout += AsciiPenguin::wrap_line(AsciiPenguin::get_feet(x_position % 4, is_left));
+            return strout;
+        }
+
+};
+
 class BoardMaker {
     private:
         std::vector<std::string> lines;
@@ -71,6 +125,7 @@ int main()
     printw("Press any key to begin. Press 'q' to quit.\n");
     refresh();
     BoardMaker board = BoardMaker("background.txt");
+    AsciiPenguin penguin = AsciiPenguin(true);
     printw(board.get_line(3, 1).c_str());
     // Process keypresses
     int character;
@@ -79,16 +134,26 @@ int main()
     {
         clear();
         int asciiCode = static_cast<int>(character);
+        bool is_left;
         if (asciiCode == 260) {
-            // Left
+            // Left key
             penguin_x = penguin_x - 1;
+            is_left = true;
         } else if (asciiCode == 261) {
-            // Right
+            // Right key
             penguin_x = penguin_x + 1;
+            is_left = false;
         }
         printw("penguin x '%d'", penguin_x);
         printw("offset'%d'", (penguin_x/3) %47);
+        if (is_left) {
+            printw("here");
+        } else {
+            printw("there");
+        }
         std::string new_str = board.get_trees_and_grass(penguin_x);
+        new_str += "\n";
+        new_str += penguin.get_penguin(is_left, penguin_x);
         printw(new_str.c_str());
         refresh();
     }
