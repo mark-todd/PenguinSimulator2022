@@ -452,11 +452,11 @@ int main()
     refresh();
     BoardMaker board = BoardMaker("background.txt");
 
-
     // Process keypresses
     int character;
     int penguin_x = 0;
     double flying_calories = 0;
+    bool fly_mode = false;
     while ((character = getch()) != 'q')
     {
         clear();
@@ -464,12 +464,26 @@ int main()
         bool is_left;
         if (asciiCode == 260) {
             // Left key
-            penguin_x = penguin_x - 1;
+            if (fly_mode) {
+                penguin_x = penguin_x - 3;
+                flying_calories -= 1;
+            } else {
+                penguin_x = penguin_x - 1;
+            }
+            
             is_left = true;
         } else if (asciiCode == 261) {
             // Right key
-            penguin_x = penguin_x + 1;
+            if (fly_mode) {
+                penguin_x = penguin_x + 3;
+                flying_calories -= 1;
+            } else {
+                penguin_x = penguin_x + 1;
+            }
             is_left = false;
+        }
+        if (flying_calories <=0) {
+            fly_mode = false;
         }
         printw("Distance from start: %d\n", penguin_x);
         printw("Flying calories: %f\n", flying_calories);
@@ -499,6 +513,7 @@ int main()
             printw("Press f to fly!\n");
             
             if (asciiCode == 102) {
+                fly_mode = true;
                 printw("Fly mode engaged!\n");
             }
         }
