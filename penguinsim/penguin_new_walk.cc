@@ -184,7 +184,21 @@ class BoardMaker {
                 return str.substr(-lake_start) + '\n';
             }
         }
+        std::string get_seal_line(const int line_no, const int rel_to_penguin)
+        {
+            const std::string str = BoardMaker::lines[line_no];
 
+            const int seal_start = rel_to_penguin + offset -7 ;
+            if (seal_start > width || seal_start < -width) {
+                return "\n";
+            } else if (seal_start > 0) {
+                return std::string(seal_start, ' ') + str.substr(0, width - seal_start) + '\n';
+            } else if (seal_start == 0) {
+                return str + '\n';
+            } else {
+                return str.substr(-seal_start) + '\n';
+            }
+        }
         std::string get_line(const int line_no, const int x_offset) {
             return moveStartToEnd(BoardMaker::lines[line_no], x_offset);
         }
@@ -237,6 +251,13 @@ class BoardMaker {
         }
         std::string get_flying_penguin(const bool is_left, const int x_position) {
             return flying_penguin.get_penguin(is_left, x_position);
+        }
+        std::string get_seal(const int x_seal) {
+            std::string new_str = "";
+            for (int line_no=23; line_no < 27; ++line_no) {
+                new_str += BoardMaker::get_seal_line(line_no, x_seal/3);
+            }
+            return new_str;
         }
 };
 
@@ -497,9 +518,17 @@ int main()
     int penguin_x = 0;
     double flying_calories = 0;
     bool fly_mode = false;
+    int seal_x = -150;
+    bool game_over = false;
     while ((character = getch()) != 'q')
     {
         clear();
+        if (seal_x > penguin_x) {
+            printw("GAME OVER\n");
+            refresh();
+            continue;
+        }
+
         int asciiCode = static_cast<int>(character);
         bool is_left;
         if (asciiCode == 260) {
@@ -525,9 +554,12 @@ int main()
         if (flying_calories <=0) {
             fly_mode = false;
         }
+        seal_x += 2;
         printw("Distance from start: %d\n", penguin_x);
         printw("Flying calories: %f\n", flying_calories);
+        printw("Seal Distance: %d\n", penguin_x - seal_x);
         std::string new_str = board.get_trees_and_grass(penguin_x);
+        new_str += board.get_seal(seal_x-penguin_x);
         new_str += "\n";
         if (fly_mode) {
             new_str += board.get_flying_penguin(is_left, penguin_x);
@@ -555,12 +587,22 @@ int main()
             }
         }
         if (flying_calories > 0) {
-            printw("Press f to fly!\n");
-            
-            if (asciiCode == 102) {
-                fly_mode = true;
-                printw("Fly mode engaged!\n");
+            if (fly_mode) {
+                printw("Press f to stop flying!\n");
+                
+                if (asciiCode == 102) {
+                    fly_mode = false;
+                    printw("Fly mode disengaged!\n");
+                }
+            } else {
+                printw("Press f to fly!\n");
+                
+                if (asciiCode == 102) {
+                    fly_mode = true;
+                    printw("Fly mode engaged!\n");
+                }
             }
+
         }
         refresh();
     }
