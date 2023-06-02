@@ -52,6 +52,7 @@ namespace RandomUtils {
 }
 
 
+
 class LoreLoader {
     private:
         std::list<std::string> lore;
@@ -249,6 +250,29 @@ std::string addLineBreaks(const std::string& inputString, int maxLineLength) {
     return outputString;
 };
 
+
+std::vector<int> get_lake_coords(int n_lakes) {
+    // Initialize random number generator
+    std::random_device rd;
+    std::mt19937 gen(rd());
+
+    // Set the mean of the Poisson distribution
+    double mean = 100.0;
+
+    // Create the Poisson distribution object
+    std::poisson_distribution<int> distribution(mean);
+    std::vector<int> coords;
+    int prev_coord = distribution(gen);
+    coords.push_back(prev_coord);
+    // Generate and print some samples
+    for (int i = 0; i < n_lakes; i++) {
+        int sample = distribution(gen);
+        prev_coord = prev_coord + sample + 60;
+        coords.push_back(prev_coord);
+    }
+    return coords;
+}
+
 int main()
 {
     // Initialize ncurses
@@ -256,7 +280,7 @@ int main()
     cbreak();              // Line buffering disabled
     noecho();              // Don't display keypresses
     keypad(stdscr, TRUE);  // Enable function keys
-
+    std::vector<int> lake_coords = get_lake_coords(10);
     // Print instructions
     printw(display_intro("new_intro_text.txt").c_str());
     LoreLoader lore = LoreLoader("lore.txt");
@@ -284,13 +308,27 @@ int main()
             penguin_x = penguin_x + 1;
             is_left = false;
         }
-        printw("penguin x '%d'", penguin_x);
+        printw("Distance from start: %d", penguin_x);
         std::string new_str = board.get_trees_and_grass(penguin_x);
         new_str += "\n";
         new_str += board.get_penguin(is_left, penguin_x);
-        new_str += board.get_lake(-penguin_x);
-        new_str += board.get_lake(-penguin_x +100);
+
+        bool lake_aligned = false;
+        for (const int& element : lake_coords) {
+            if ( penguin_x < (element + 10) || penguin_x > (element -10)) {
+                if (penguin_x >= element && penguin_x <= element +7) {
+                    lake_aligned = true;
+                }
+                new_str += board.get_lake(element-penguin_x);
+            }
+        }
         printw(new_str.c_str());
+        if (lake_aligned) {
+            printw("Press space to fish!\n");
+            if (asciiCode == 32) {
+                printw("You fished!");
+            }
+        }
         refresh();
     }
 
