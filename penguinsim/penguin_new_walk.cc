@@ -124,6 +124,42 @@ class AsciiPenguin {
             strout += AsciiPenguin::wrap_line(AsciiPenguin::get_feet(x_position % 4, is_left));
             return strout;
         }
+};
+
+class AsciiFlyingPenguin {
+    private:
+        bool facing_left;
+        std::string get_head(const bool is_left) {
+            if (is_left) {
+                return "<· )___/\\";
+            } else {
+                return "/\\___( ·>";
+            }
+        }
+        std::string get_mid(const bool is_left) {
+            if (is_left) {
+                return " // \\\\   ";
+            } else {
+                return "   // \\\\ ";
+            }
+        }
+
+        std::string wrap_line(const std::string line) {
+            std::string n_line = std::string(18, ' ');
+            n_line += line;
+            n_line += std::string(18, ' ');
+            n_line += "\n";
+            return n_line;
+        }
+    public:
+        AsciiFlyingPenguin(const bool starts_facing_left) {
+            facing_left = starts_facing_left;
+        }
+        std::string get_penguin(const bool is_left, const int x_position) {
+            std::string strout = AsciiFlyingPenguin::wrap_line(AsciiFlyingPenguin::get_head(is_left));
+            strout += AsciiFlyingPenguin::wrap_line(AsciiFlyingPenguin::get_mid(is_left));
+            return strout;
+        }
 
 };
 
@@ -131,6 +167,7 @@ class BoardMaker {
     private:
         std::vector<std::string> lines;
         AsciiPenguin penguin = AsciiPenguin(true);
+        AsciiFlyingPenguin flying_penguin = AsciiFlyingPenguin(true);
         const int offset = 20;
         const int width = 40;
         std::string get_lake_line(const int line_no, const int rel_to_penguin)
@@ -197,6 +234,9 @@ class BoardMaker {
 
         std::string get_penguin(const bool is_left, const int x_position) {
             return penguin.get_penguin(is_left, x_position);
+        }
+        std::string get_flying_penguin(const bool is_left, const int x_position) {
+            return flying_penguin.get_penguin(is_left, x_position);
         }
 };
 
@@ -489,7 +529,12 @@ int main()
         printw("Flying calories: %f\n", flying_calories);
         std::string new_str = board.get_trees_and_grass(penguin_x);
         new_str += "\n";
-        new_str += board.get_penguin(is_left, penguin_x);
+        if (fly_mode) {
+            new_str += board.get_flying_penguin(is_left, penguin_x);
+        } else {
+            new_str += board.get_penguin(is_left, penguin_x);
+        }
+        
 
         bool lake_aligned = false;
         for (const int& element : lake_coords) {
