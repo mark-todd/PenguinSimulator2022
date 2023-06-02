@@ -4,6 +4,8 @@
 #include <fstream>
 #include <vector>
 #include <string>
+#include <list>
+#include <random>
 
 std::string moveStartToEnd(const std::string& str, int numCharacters)
 {
@@ -15,7 +17,47 @@ std::string moveStartToEnd(const std::string& str, int numCharacters)
 
     return end + start;
 }
+namespace RandomUtils {
+    template<typename Iter, typename RandomGenerator>
+    Iter select_randomly(Iter start, Iter end, RandomGenerator& g) {
+        std::uniform_int_distribution<> dis(0, std::distance(start, end) - 1);
+        std::advance(start, dis(g));
+        return start;
+    }
 
+    template<typename Iter>
+    Iter select_randomly(Iter start, Iter end) {
+        static std::random_device rd;
+        static std::mt19937 gen(rd());
+        return select_randomly(start, end, gen);
+    }
+    double random_in_range (const double range_from = 0.0, const double range_to = 1.0) {
+        std::random_device rand_dev;
+        std::mt19937 generator(rand_dev());
+        std::uniform_real_distribution<double> distr(range_from, range_to);
+        return distr(generator);
+    }
+}
+
+
+class LoreLoader {
+    private:
+        std::list<std::string> lore;
+    public:
+        LoreLoader(const std::string lore_file) {
+            std::ifstream f;
+            f.open(lore_file);
+            std::string line;
+            for( std::string line; getline( f, line ); )
+            {
+                lore.push_back(line);
+            }
+            f.close();
+        }
+        std::string get_lore() {
+            return *RandomUtils::select_randomly(lore.begin(), lore.end()) + "\n" + "\n";
+        }
+};
 
 class AsciiPenguin {
     private:
@@ -145,8 +187,56 @@ class BoardMaker {
         }
 };
 
+std::string display_intro(const std::string intro_file) {
+    std::ifstream filestream;
+    filestream.open(intro_file);
+    std::string all_lines = "";
+    std::string line;
+    while ( std::getline(filestream, line) ) {
+        all_lines += line;
+        all_lines += "\n";
+    }
+    return all_lines;
+}
 
 
+std::string addLineBreaks(const std::string& inputString, int maxLineLength) {
+    std::string outputString;
+    std::string currentWord;
+    std::string currentLine;
+    for (char c : inputString) {
+        if (c == ' ') {
+            // Check if adding the current word would exceed the maximum line length
+            if (currentLine.length() + currentWord.length() + 1 > maxLineLength) {
+                // Add line break and current word to the output string
+                outputString += ' ';
+                outputString += currentWord;
+                outputString += '\n';
+                currentLine = "";
+            } else {
+                // Add current word to the output string
+                outputString += ' ';
+                outputString += currentWord;
+                currentLine += currentWord;
+            }
+
+            // Reset current word
+            currentWord = "";
+        } else {
+            // Append character to current word
+            currentWord += c;
+        }
+    }
+
+    // Add the last word to the output string
+    if (currentLine.length() + currentWord.length() > maxLineLength) {
+        outputString += '\n';
+    }
+    outputString += ' ';
+    outputString += currentWord;
+
+    return outputString;
+};
 
 int main()
 {
@@ -157,6 +247,10 @@ int main()
     keypad(stdscr, TRUE);  // Enable function keys
 
     // Print instructions
+    printw(display_intro("new_intro_text.txt").c_str());
+    LoreLoader lore = LoreLoader("lore.txt");
+    
+    printw(addLineBreaks(lore.get_lore(), 55).c_str());
     printw("Press any key to begin. Press 'q' to quit.\n");
     refresh();
     BoardMaker board = BoardMaker("background.txt");
