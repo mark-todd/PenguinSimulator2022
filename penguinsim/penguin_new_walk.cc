@@ -16,6 +16,7 @@ std::string moveStartToEnd(const std::string& str, int numCharacters)
     return end + start;
 }
 
+
 class AsciiPenguin {
     private:
         bool facing_left;
@@ -51,7 +52,7 @@ class AsciiPenguin {
         }
 
         std::string wrap_line(const std::string line) {
-            std::string n_line = std::string(20, ' ');
+            std::string n_line = std::string(18, ' ');
             n_line += line;
             n_line += std::string(18, ' ');
             n_line += "\n";
@@ -77,7 +78,7 @@ class BoardMaker {
     public:
         BoardMaker(const std::string filename) {
             std::ifstream background_file;
-            background_file.open(filename);//, std::ios_base::app);
+            background_file.open(filename);
             std::string line;
             for( std::string line; getline( background_file, line ); )
             {
@@ -107,7 +108,30 @@ class BoardMaker {
             str +=  BoardMaker::get_grass(x_position, 2) + "\n";
             return str;
         }
-
+        std::string get_lake_line(const int line_no, const int rel_to_penguin)
+        {
+            const std::string str = BoardMaker::lines[line_no];
+            const int offset = 20;
+            const int width = 40;
+            const int lake_start = rel_to_penguin + offset;
+            if (lake_start > width) {
+                return std::string(width, ' ');
+            } else if (lake_start > 0) {
+                return std::string(lake_start, ' ') + str.substr(0, width - lake_start);
+            } else if (lake_start == 0) {
+                return str;
+            } else {
+                return str.substr(-lake_start);
+            }
+        }
+        std::string get_lake(const int x_lake) {
+            std::string new_str = "";
+            for (int line_no=16; line_no < 22; ++line_no) {
+                new_str += BoardMaker::get_lake_line(line_no, x_lake);
+                new_str += "\n";
+            }
+            return new_str;
+        }
 };
 
 
@@ -126,7 +150,7 @@ int main()
     refresh();
     BoardMaker board = BoardMaker("background.txt");
     AsciiPenguin penguin = AsciiPenguin(true);
-    printw(board.get_line(3, 1).c_str());
+
     // Process keypresses
     int character;
     int penguin_x = 0;
@@ -145,15 +169,10 @@ int main()
             is_left = false;
         }
         printw("penguin x '%d'", penguin_x);
-        printw("offset'%d'", (penguin_x/3) %47);
-        if (is_left) {
-            printw("here");
-        } else {
-            printw("there");
-        }
         std::string new_str = board.get_trees_and_grass(penguin_x);
         new_str += "\n";
         new_str += penguin.get_penguin(is_left, penguin_x);
+        new_str += board.get_lake(-penguin_x);
         printw(new_str.c_str());
         refresh();
     }
