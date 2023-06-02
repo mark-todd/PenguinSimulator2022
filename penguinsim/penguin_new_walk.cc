@@ -6,6 +6,7 @@
 #include <string>
 #include <list>
 #include <random>
+#include <cassert>
 
 std::string moveStartToEnd(const std::string& str, int x_coord) {
     if (x_coord >= 0) {
@@ -273,8 +274,169 @@ std::vector<int> get_lake_coords(int n_lakes) {
     return coords;
 }
 
+std::list<std::string> split_string (std::string input_string, std::string delimiter) {
+    size_t pos = 0;
+    std::string token;
+    std::list<std::string> output_list;
+    while (true) {
+        pos = input_string.find(delimiter);
+        if (pos != std::string::npos) {
+            token = input_string.substr(0, pos);
+            output_list.push_back(token);
+            input_string.erase(0, pos + delimiter.length());
+        }
+        else {
+            token = input_string.substr(0, pos);
+            output_list.push_back(token);
+            break;
+        }
+    }
+    return output_list;
+}
+
+
+namespace Fishing {
+    enum FishingRanges {short_range = 0, medium_range = 1, long_range = 2};
+
+    FishingRanges str_to_fish_range(std::string input_string) {
+        if (input_string == "short") {
+            return short_range;
+        }
+        else if (input_string == "medium") {
+            return medium_range;
+        }
+        else if (input_string == "long") {
+            return long_range;
+        }
+        else {
+            throw std::invalid_argument("invalid string");
+        }
+    }
+
+    class Fish {
+        public:
+            std::string name;
+            FishingRanges range;
+            double calorific_value;
+
+            Fish(
+                const std::string name,
+                const FishingRanges range,
+                const double calorific_value
+            ) : name(name), range(range), calorific_value(calorific_value) {}
+    };
+
+    class FishCatcher {
+        private:
+            std::string delimiter;
+            std::ifstream fish_file_stream;
+            std::list<Fish> sr_fish_catalogue;
+            std::list<Fish> mr_fish_catalogue;
+            std::list<Fish> lr_fish_catalogue;
+            double sr_prob;
+            double mr_prob;
+            double lr_prob;
+        public:
+            FishCatcher(
+                std::string fish_file,
+                const double sr_prob = 0.8,
+                const double mr_prob = 0.5,
+                const double lr_prob = 0.1
+            ) : sr_prob(sr_prob), mr_prob(mr_prob), lr_prob(lr_prob) {
+                fish_file_stream.open(fish_file);
+                std::string line;
+                while ( std::getline(fish_file_stream, line) ) {
+                    std::list<std::string> line_list;
+                    FishingRanges associated_range;
+                    line_list = split_string(line, ",");
+                    std::string range;
+                    std::string fish_name;
+                    std::string fish_cals;
+                    if (line_list.size() == 3) {
+                        range = line_list.front();
+                        line_list.pop_front();
+                        fish_name = line_list.front();
+                        line_list.pop_front();
+                        fish_cals = line_list.front();
+                        line_list.pop_front();
+                    }
+                    else {
+                        throw std::invalid_argument("Size not 3"); 
+                    }
+                    assert(line_list.size() == 0);
+                    associated_range = str_to_fish_range(range);
+                    Fish new_fish(fish_name, associated_range, std::stod(fish_cals));
+                    if (associated_range == short_range) {
+                        sr_fish_catalogue.push_back(new_fish);
+                    }
+                    else if (associated_range == medium_range) {
+                        mr_fish_catalogue.push_back(new_fish);
+                    }
+                    else {
+                        lr_fish_catalogue.push_back(new_fish);
+                    }
+                    
+                }
+            }
+            Fish catch_fish(const FishingRanges range) {
+                double score = RandomUtils::random_in_range();
+                printw("Score: %f\n", score);
+                if (range == short_range and score < sr_prob) {
+                    return *RandomUtils::select_randomly(sr_fish_catalogue.begin(), sr_fish_catalogue.end());
+                }
+                else if (range == medium_range and score < mr_prob) {
+                    return *RandomUtils::select_randomly(mr_fish_catalogue.begin(), mr_fish_catalogue.end());
+                }
+                else if (range == long_range and score < lr_prob) {
+                    return *RandomUtils::select_randomly(lr_fish_catalogue.begin(), lr_fish_catalogue.end());
+                }
+                else {
+                    Fish null_fish("Nothing!", range, 0);
+                    return null_fish;
+                }
+            };
+
+    };
+}
+
+Fishing::Fish catch_fish (Fishing::FishCatcher & fish_catcher) {
+    std::string range_choice;
+    Fishing::Fish fish("Error", Fishing::short_range, 0);
+    while (true) {
+        // Create a buffer to store the user input
+        char buffer[256];
+
+        // Prompt the user for input
+        printw("What range would you like to search \nfor fish at? (short/med/long): ");
+        echo();
+        // Read the string from the user
+        getstr(buffer);
+        std::string range_choice = buffer;
+        noecho();
+        if (range_choice == "short") {
+            fish = fish_catcher.catch_fish(Fishing::short_range);
+            break;
+        }
+        else if (range_choice == "med") {
+            fish = fish_catcher.catch_fish(Fishing::medium_range);
+            break;
+        }
+        else if (range_choice == "long") {
+            fish = fish_catcher.catch_fish(Fishing::long_range);
+            break;
+        }
+        else {
+            printw("Invalid choice\n");
+        }
+    }
+    assert (fish.name!="Error");
+    return fish;
+}
+
+
 int main()
 {
+    Fishing::FishCatcher catcher("fish.csv");
     // Initialize ncurses
     initscr();
     cbreak();              // Line buffering disabled
@@ -294,6 +456,7 @@ int main()
     // Process keypresses
     int character;
     int penguin_x = 0;
+    double flying_calories = 0;
     while ((character = getch()) != 'q')
     {
         clear();
@@ -308,7 +471,8 @@ int main()
             penguin_x = penguin_x + 1;
             is_left = false;
         }
-        printw("Distance from start: %d", penguin_x);
+        printw("Distance from start: %d\n", penguin_x);
+        printw("Flying calories: %f\n", flying_calories);
         std::string new_str = board.get_trees_and_grass(penguin_x);
         new_str += "\n";
         new_str += board.get_penguin(is_left, penguin_x);
@@ -326,7 +490,16 @@ int main()
         if (lake_aligned) {
             printw("Press space to fish!\n");
             if (asciiCode == 32) {
-                printw("You fished!");
+                Fishing::Fish fish = catch_fish(catcher);
+                printw("You caught: %s\n", fish.name.c_str());
+                flying_calories += fish.calorific_value;
+            }
+        }
+        if (flying_calories > 0) {
+            printw("Press f to fly!\n");
+            
+            if (asciiCode == 102) {
+                printw("Fly mode engaged!\n");
             }
         }
         refresh();
