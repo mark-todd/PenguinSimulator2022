@@ -7,15 +7,27 @@
 #include <list>
 #include <random>
 
-std::string moveStartToEnd(const std::string& str, int numCharacters)
-{
-    if (numCharacters >= str.length())
-        return str;  // No change needed if numCharacters is greater than or equal to string length
+std::string moveStartToEnd(const std::string& str, int x_coord) {
+    if (x_coord >= 0) {
+        if (x_coord >= str.length()) {
+            return str;  // No change needed if x_coord is greater than or equal to string length
+        }
 
-    std::string start = str.substr(0, numCharacters);
-    std::string end = str.substr(numCharacters);
+        std::string start = str.substr(0, x_coord);
+        std::string end = str.substr(x_coord);
 
-    return end + start;
+        return end + start;
+    } else {
+        int startIndex = str.length() + x_coord;
+        if (startIndex < 0) {
+            startIndex = 0;  // Set startIndex to 0 if it goes below 0
+        }
+
+        std::string start = str.substr(0, startIndex);
+        std::string end = str.substr(startIndex);
+
+        return end + start;
+    }
 }
 namespace RandomUtils {
     template<typename Iter, typename RandomGenerator>
@@ -123,14 +135,14 @@ class BoardMaker {
         {
             const std::string str = BoardMaker::lines[line_no];
             const int lake_start = rel_to_penguin + offset;
-            if (lake_start > width) {
-                return std::string(width, ' ');
+            if (lake_start > width || lake_start < -width) {
+                return "";
             } else if (lake_start > 0) {
-                return std::string(lake_start, ' ') + str.substr(0, width - lake_start);
+                return std::string(lake_start, ' ') + str.substr(0, width - lake_start) + '\n';
             } else if (lake_start == 0) {
-                return str;
+                return str + '\n';
             } else {
-                return str.substr(-lake_start);
+                return str.substr(-lake_start) + '\n';
             }
         }
 
@@ -177,7 +189,6 @@ class BoardMaker {
             std::string new_str = "";
             for (int line_no=16; line_no < 22; ++line_no) {
                 new_str += BoardMaker::get_lake_line(line_no, x_lake);
-                new_str += "\n";
             }
             return new_str;
         }
@@ -278,6 +289,7 @@ int main()
         new_str += "\n";
         new_str += board.get_penguin(is_left, penguin_x);
         new_str += board.get_lake(-penguin_x);
+        new_str += board.get_lake(-penguin_x +100);
         printw(new_str.c_str());
         refresh();
     }
