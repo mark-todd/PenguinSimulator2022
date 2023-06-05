@@ -535,7 +535,7 @@ int main()
             // Left key
             if (fly_mode) {
                 penguin_x = penguin_x - 3;
-                flying_calories -= 1;
+                flying_calories -= 4;
             } else {
                 penguin_x = penguin_x - 1;
             }
@@ -545,7 +545,7 @@ int main()
             // Right key
             if (fly_mode) {
                 penguin_x = penguin_x + 3;
-                flying_calories -= 1;
+                flying_calories -= 4;
             } else {
                 penguin_x = penguin_x + 1;
             }
