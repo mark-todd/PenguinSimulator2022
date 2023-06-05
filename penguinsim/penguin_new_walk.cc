@@ -76,44 +76,24 @@ class LoreLoader {
 class AsciiPenguin {
     private:
         bool facing_left;
-        std::string get_head(const bool is_left) {
-            if (is_left) {
-                return "<· ) ";
+        std::string get_head(const bool& is_left) {
+            return is_left ? "<· ) " : " ( ·>";
+        }
+        std::string get_feet(const int& i, const bool& is_left) {
+            if (i == 0) {
+                return " \" \" ";
+            } else if (i == 1) {
+                return is_left ? " \"  \"" : "\"  \" ";
+            } else if (i == 2) {
+                return is_left ? "\"  \" " : " \"  \"";
             } else {
-                return " ( ·>";
+                return is_left ? "  \"\" " : " \"\"  ";
             }
         }
-        std::string get_feet(const int i, const bool is_left) {
-            if (is_left) {
-                if (i == 0) {
-                    return(" \" \" ");
-                } else if (i==1) {
-                    return(" \"  \"");
-                } else if (i==2) {
-                    return("\"  \" ");
-                } else {
-                    return("  \"\" ");
-                }
-            } else {
-                if (i == 0) {
-                    return(" \" \" ");
-                } else if (i==1) {
-                    return("\"  \" ");
-                } else if (i==2) {
-                    return(" \"  \"");
-                } else {
-                    return(" \"\"  ");
-                }
-            }
+        std::string wrap_line(const std::string& line) {
+            return std::string(18, ' ') + line + std::string(18, ' ') + "\n";
         }
 
-        std::string wrap_line(const std::string line) {
-            std::string n_line = std::string(18, ' ');
-            n_line += line;
-            n_line += std::string(18, ' ');
-            n_line += "\n";
-            return n_line;
-        }
     public:
         AsciiPenguin(const bool starts_facing_left) {
             facing_left = starts_facing_left;
@@ -130,27 +110,16 @@ class AsciiFlyingPenguin {
     private:
         bool facing_left;
         std::string get_head(const bool is_left) {
-            if (is_left) {
-                return "<· )___/\\";
-            } else {
-                return "/\\___( ·>";
-            }
+            return is_left ? "<· )___/\\" : "/\\___( ·>";
         }
         std::string get_mid(const bool is_left) {
-            if (is_left) {
-                return " // \\\\   ";
-            } else {
-                return "   // \\\\ ";
-            }
+            return is_left ? " // \\\\   " : "   // \\\\ ";
         }
 
-        std::string wrap_line(const std::string line) {
-            std::string n_line = std::string(18, ' ');
-            n_line += line;
-            n_line += std::string(18, ' ');
-            n_line += "\n";
-            return n_line;
+        std::string wrap_line(const std::string& line) {
+            return std::string(18, ' ') + line + std::string(18, ' ') + "\n";
         }
+
     public:
         AsciiFlyingPenguin(const bool starts_facing_left) {
             facing_left = starts_facing_left;
@@ -177,11 +146,11 @@ class BoardMaker {
             if (lake_start > width || lake_start < -width) {
                 return "";
             } else if (lake_start > 0) {
-                return std::string(lake_start, ' ') + str.substr(0, width - lake_start) + '\n';
+                return std::string(lake_start, ' ') + str.substr(0, width - lake_start) + "\n";
             } else if (lake_start == 0) {
-                return str + '\n';
+                return str + "\n";
             } else {
-                return str.substr(-lake_start) + '\n';
+                return str.substr(-lake_start) + "\n";
             }
         }
         std::string get_seal_line(const int line_no, const int rel_to_penguin)
@@ -192,11 +161,11 @@ class BoardMaker {
             if (seal_start > width || seal_start < -width) {
                 return "\n";
             } else if (seal_start > 0) {
-                return std::string(seal_start, ' ') + str.substr(0, width - seal_start) + '\n';
+                return std::string(seal_start, ' ') + str.substr(0, width - seal_start) + "\n";
             } else if (seal_start == 0) {
-                return str + '\n';
+                return str + "\n";
             } else {
-                return str.substr(-seal_start) + '\n';
+                return str.substr(-seal_start) + "\n";
             }
         }
         std::string get_line(const int line_no, const int x_offset) {
@@ -206,8 +175,7 @@ class BoardMaker {
         std::string get_trees(const int x_position, const int slowness) {
             std::string new_str = "";
             for (int line_no=0; line_no < 11; ++line_no) {
-                new_str += BoardMaker::get_line(line_no, (x_position/slowness) %width);
-                new_str += "\n";
+                new_str += BoardMaker::get_line(line_no, (x_position/slowness) %width) + "\n";
             }
             return new_str;
         }
@@ -335,24 +303,17 @@ std::vector<int> get_lake_coords(int n_lakes) {
     return coords;
 }
 
-std::list<std::string> split_string (std::string input_string, std::string delimiter) {
-    size_t pos = 0;
-    std::string token;
-    std::list<std::string> output_list;
-    while (true) {
-        pos = input_string.find(delimiter);
-        if (pos != std::string::npos) {
-            token = input_string.substr(0, pos);
-            output_list.push_back(token);
-            input_string.erase(0, pos + delimiter.length());
-        }
-        else {
-            token = input_string.substr(0, pos);
-            output_list.push_back(token);
-            break;
-        }
+std::vector<std::string> split_string(const std::string& str, char delimiter) {
+    std::vector<std::string> tokens;
+    std::string::size_type start = 0;
+    std::string::size_type end = str.find(delimiter);
+    while (end != std::string::npos) {
+        tokens.push_back(str.substr(start, end - start));
+        start = end + 1;
+        end = str.find(delimiter, start);
     }
-    return output_list;
+    tokens.push_back(str.substr(start));
+    return tokens;
 }
 
 
@@ -407,24 +368,13 @@ namespace Fishing {
                 fish_file_stream.open(fish_file);
                 std::string line;
                 while ( std::getline(fish_file_stream, line) ) {
-                    std::list<std::string> line_list;
+                    std::vector<std::string> line_list;
                     FishingRanges associated_range;
-                    line_list = split_string(line, ",");
-                    std::string range;
-                    std::string fish_name;
-                    std::string fish_cals;
-                    if (line_list.size() == 3) {
-                        range = line_list.front();
-                        line_list.pop_front();
-                        fish_name = line_list.front();
-                        line_list.pop_front();
-                        fish_cals = line_list.front();
-                        line_list.pop_front();
-                    }
-                    else {
-                        throw std::invalid_argument("Size not 3"); 
-                    }
-                    assert(line_list.size() == 0);
+                    line_list = split_string(line, ',');
+                    const std::string range = line_list.at(0);
+                    const std::string fish_name = line_list.at(1);
+                    const std::string fish_cals = line_list.at(2);
+
                     associated_range = str_to_fish_range(range);
                     Fish new_fish(fish_name, associated_range, std::stod(fish_cals));
                     if (associated_range == short_range) {
