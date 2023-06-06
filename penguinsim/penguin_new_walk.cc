@@ -7,6 +7,7 @@
 #include <list>
 #include <random>
 #include <cassert>
+#include <tuple>
 
 std::string moveStartToEnd(const std::string& str, int x_coord) {
     if (x_coord >= 0) {
@@ -281,26 +282,25 @@ std::string addLineBreaks(const std::string& inputString, int maxLineLength) {
 };
 
 
-std::vector<int> get_lake_coords(int n_lakes) {
-    // Initialize random number generator
+std::vector<std::tuple<int, int>> get_lake_info(int n_lakes) {
     std::random_device rd;
     std::mt19937 gen(rd());
 
-    // Set the mean of the Poisson distribution
-    double mean = 100.0;
+    double coord_mean = 100.0;
+    std::poisson_distribution<int> coord_d(coord_mean);
 
-    // Create the Poisson distribution object
-    std::poisson_distribution<int> distribution(mean);
-    std::vector<int> coords;
-    int prev_coord = distribution(gen);
-    coords.push_back(prev_coord);
-    // Generate and print some samples
+    double fish_mean = 2.0;
+    std::poisson_distribution<int> fish_d(fish_mean);
+
+    std::vector<std::tuple<int, int>> lake_info;
+    int prev_coord = coord_d(gen);
+    lake_info.push_back(std::make_tuple(prev_coord, fish_d(gen)));
     for (int i = 0; i < n_lakes; i++) {
-        int sample = distribution(gen);
-        prev_coord = prev_coord + sample + 60;
-        coords.push_back(prev_coord);
+        int coord_sample = coord_d(gen);
+        prev_coord = prev_coord + coord_sample + 60;
+        lake_info.push_back(std::make_tuple(prev_coord, fish_d(gen)));
     }
-    return coords;
+    return lake_info;
 }
 
 std::vector<std::string> split_string(const std::string& str, char delimiter) {
@@ -453,7 +453,7 @@ int main()
     cbreak();              // Line buffering disabled
     noecho();              // Don't display keypresses
     keypad(stdscr, TRUE);  // Enable function keys
-    std::vector<int> lake_coords = get_lake_coords(10);
+    std::vector<std::tuple<int, int>> lake_info = get_lake_info(10);
     // Print instructions
     printw(display_intro("new_intro_text.txt").c_str());
     LoreLoader lore = LoreLoader("lore.txt");
@@ -519,22 +519,35 @@ int main()
         
 
         bool lake_aligned = false;
-        for (const int& element : lake_coords) {
-            if ( penguin_x < (element + 10) || penguin_x > (element -10)) {
-                if (penguin_x >= element && penguin_x <= element +7) {
+        int index = 0;
+        int lake_i;
+        for (const std::tuple<int, int>& element : lake_info) {
+            int coord = std::get<0>(element);
+            if ( penguin_x < (coord + 10) || penguin_x > (coord -10)) {
+                if (penguin_x >= coord && penguin_x <= coord +7) {
                     lake_aligned = true;
+                    lake_i = index;
                 }
-                new_str += board.get_lake(element-penguin_x);
+                new_str += board.get_lake(coord-penguin_x);
             }
+            index++;
         }
         printw(new_str.c_str());
         if (lake_aligned) {
-            printw("Press space to fish!\n");
-            if (asciiCode == 32) {
-                Fishing::Fish fish = catch_fish(catcher);
-                printw("You caught: %s\n", fish.name.c_str());
-                flying_calories += fish.calorific_value;
+            int& n_fish = std::get<1>(lake_info.at(lake_i));
+            
+            if (n_fish > 0) {
+                printw("Press space to fish!\n");
+                if (asciiCode == 32) {
+                    Fishing::Fish fish = catch_fish(catcher);
+                    printw("You caught: %s\n", fish.name.c_str());
+                    flying_calories += fish.calorific_value;
+                    if (fish.calorific_value > 0) {
+                        n_fish -= 1;
+                    }
+                }
             }
+            printw("Fish remaining: %d\n", n_fish);
         }
         if (flying_calories > 0) {
             if (fly_mode) {
